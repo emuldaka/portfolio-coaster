@@ -1,45 +1,43 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { Slider } from "@/components/ui/slider"
-import { Label } from "@/components/ui/label"
 
 const HomePage: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef(0);
 
-  const [speed, setSpeed] = useState(0.0005);
-  const [verticalAngle, setVerticalAngle] = useState(2);
+  const initialSpeed = 0.0005;
+  const initialVerticalAngle = 2;
+
+  const speed = useRef(initialSpeed);
+  const verticalAngle = useRef(initialVerticalAngle);
 
   useEffect(() => {
-    // Check if localStorage is available (client-side)
     if (typeof window !== 'undefined') {
       const storedSpeed = localStorage.getItem('speed');
       if (storedSpeed) {
-        setSpeed(parseFloat(storedSpeed));
+        speed.current = parseFloat(storedSpeed);
       }
 
       const storedVerticalAngle = localStorage.getItem('verticalAngle');
       if (storedVerticalAngle) {
-        setVerticalAngle(parseFloat(storedVerticalAngle));
+        verticalAngle.current = parseFloat(storedVerticalAngle);
       }
     }
   }, []);
 
   useEffect(() => {
-    // Check if localStorage is available (client-side)
     if (typeof window !== 'undefined') {
-      localStorage.setItem('speed', speed.toString());
+      localStorage.setItem('speed', speed.current.toString());
     }
-  }, [speed]);
+  }, []);
 
   useEffect(() => {
-    // Check if localStorage is available (client-side)
     if (typeof window !== 'undefined') {
-      localStorage.setItem('verticalAngle', verticalAngle.toString());
+      localStorage.setItem('verticalAngle', verticalAngle.current.toString());
     }
-  }, [verticalAngle]);
+  }, []);
 
   useEffect(() => {
     let scene: THREE.Scene,
@@ -105,15 +103,13 @@ const HomePage: React.FC = () => {
     const animate = () => {
       if (!mountRef.current) return;
 
-      // Scroll Wheel adjustment
-      scrollRef.current += speed;
       const looptime = 20;
       const t = (scrollRef.current % looptime) / looptime;
 
       // Camera Position
       const position = track.getPointAt(t);
       // Position the camera slightly above the track
-      camera.position.copy(position).add(new THREE.Vector3(0, verticalAngle, 0));
+      camera.position.copy(position).add(new THREE.Vector3(0, verticalAngle.current, 0));
 
       // Camera Look At
       const lookAt = track.getPointAt((t + 0.01) % 1); // Look slightly ahead
@@ -151,39 +147,13 @@ const HomePage: React.FC = () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('wheel', handleScroll);
     };
-  }, [speed, verticalAngle]);
+  }, []);
 
   return (
     <>
       <div style={{ height: '100vh', width: '100vw' }} ref={mountRef} />
-      <div style={{ position: 'fixed', top: '20px', left: '20px', background: 'white', padding: '20px', borderRadius: '10px' }}>
-        <div>
-          <Label htmlFor="speed">Speed</Label>
-          <Slider
-            id="speed"
-            defaultValue={[speed * 10000]}
-            max={10}
-            min={0}
-            step={0.1}
-            onValueChange={(value) => setSpeed(value[0] / 10000)}
-          />
-        </div>
-        <div>
-          <Label htmlFor="verticalAngle">Vertical Angle</Label>
-          <Slider
-            id="verticalAngle"
-            defaultValue={[verticalAngle]}
-            max={10}
-            min={0}
-            step={0.1}
-            onValueChange={(value) => setVerticalAngle(value[0])}
-          />
-        </div>
-      </div>
     </>
   );
 };
 
 export default HomePage;
-
-    
