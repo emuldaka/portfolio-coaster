@@ -1,46 +1,11 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
 const HomePage: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef(0);
-
-  // tweaked values
-  const ADJUSTED_INITIAL_SPEED = 0.0005;
-  const ADJUSTED_INITIAL_VERTICAL_ANGLE = 2;
-
-  // Use refs for speed and verticalAngle to maintain their values across renders
-  const speed = useRef(ADJUSTED_INITIAL_SPEED);
-  const verticalAngle = useRef(ADJUSTED_INITIAL_VERTICAL_ANGLE);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedSpeed = localStorage.getItem('speed');
-      if (storedSpeed) {
-        speed.current = parseFloat(storedSpeed);
-      }
-
-      const storedVerticalAngle = localStorage.getItem('verticalAngle');
-      if (storedVerticalAngle) {
-        verticalAngle.current = parseFloat(storedVerticalAngle);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('speed', speed.current.toString());
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('verticalAngle', verticalAngle.current.toString());
-    }
-  }, []);
-
 
   useEffect(() => {
     let scene: THREE.Scene,
@@ -102,6 +67,26 @@ const HomePage: React.FC = () => {
       rollerCoasterGroup.add(camera);
       scene.add(tube);
       scene.add(rollerCoasterGroup);
+
+       // Start Marker (Head)
+       const startMarkerGeometry = new THREE.BoxGeometry(1, 1, 1);
+       const startMarkerMaterial = new THREE.MeshBasicMaterial({ color: 0x0000FF }); // Blue
+       const startMarker = new THREE.Mesh(startMarkerGeometry, startMarkerMaterial);
+       startMarker.position.copy(track.getPointAt(0));
+       startMarker.rotation.copy(track.computeFrenetFrames(200, true).tangents[0]);
+       scene.add(startMarker);
+   
+       // End Marker (Tail)
+       const endMarkerGeometry = new THREE.BoxGeometry(1, 1, 1);
+       const endMarkerMaterial = new THREE.MeshBasicMaterial({ color: 0xFF0000 }); // Red
+       const endMarker = new THREE.Mesh(endMarkerGeometry, endMarkerMaterial);
+       endMarker.position.copy(track.getPointAt(1));
+       endMarker.rotation.copy(track.computeFrenetFrames(200, true).tangents[199]);
+       scene.add(endMarker);
+
+      // Track Length
+      const trackLength = track.getLength();
+      console.log('Track Length:', trackLength);
     };
 
     const animate = () => {
@@ -113,7 +98,7 @@ const HomePage: React.FC = () => {
       // Camera Position
       const position = track.getPointAt(t);
       // Position the camera slightly above the track
-      camera.position.copy(position).add(new THREE.Vector3(0, verticalAngle.current, 0));
+      camera.position.copy(position).add(new THREE.Vector3(0, 2, 0));
 
       // Camera Look At
       const lookAt = track.getPointAt((t + 0.01) % 1); // Look slightly ahead
