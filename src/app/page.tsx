@@ -28,8 +28,8 @@ const HomePage: React.FC = () => {
         0.1,
         1000
       );
-      // Position the camera above the rollercoaster
-      camera.position.set(25, 30, -35);
+      // Initial camera position (adjust as needed)
+      camera.position.set(0, 5, 0);
 
       // Renderer
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -78,12 +78,11 @@ const HomePage: React.FC = () => {
 
       // Camera Position
       const position = track.getPointAt(t);
-      camera.position.copy(position);
-      //Added to keep camera above track
-      camera.position.y += 10;
+      // Position the camera slightly above the track
+      camera.position.copy(position).add(new THREE.Vector3(0, 2, 0));
 
       // Camera Look At
-      const lookAt = track.getPointAt((t + 0.01) % 1);
+      const lookAt = track.getPointAt((t + 0.01) % 1); // Look slightly ahead
       cameraTarget.copy(lookAt);
       camera.lookAt(cameraTarget);
 
