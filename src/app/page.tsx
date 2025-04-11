@@ -3,28 +3,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
+// Saved settings from devtools
+const DEFAULT_CAMERA_Y_OFFSET = 10;
+const DEFAULT_CAMERA_Z_OFFSET = 5;
+const DEFAULT_CAMERA_LOOK_AT_OFFSET = 5;
+const DEFAULT_SCROLL_SPEED_MULTIPLIER = 0.0001;
+
 const HomePage: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef(0);
-
-  // Devtool state variables with default values
-  const [cameraYOffset, setCameraYOffset] = useState(10);
-  const [cameraZOffset, setCameraZOffset] = useState(5);
-  const [cameraLookAtOffset, setCameraLookAtOffset] = useState(5);
-  const [scrollSpeedMultiplier, setScrollSpeedMultiplier] = useState(0.0001);
-
-  useEffect(() => {
-    // Load saved settings from local storage
-    const savedYOffset = localStorage.getItem('cameraYOffset');
-    const savedZOffset = localStorage.getItem('cameraZOffset');
-    const savedLookAtOffset = localStorage.getItem('cameraLookAtOffset');
-    const savedScrollSpeed = localStorage.getItem('scrollSpeedMultiplier');
-
-    if (savedYOffset) setCameraYOffset(parseFloat(savedYOffset));
-    if (savedZOffset) setCameraZOffset(parseFloat(savedZOffset));
-    if (savedLookAtOffset) setCameraLookAtOffset(parseFloat(savedLookAtOffset));
-    if (savedScrollSpeed) setScrollSpeedMultiplier(parseFloat(savedScrollSpeed));
-  }, []);
 
   useEffect(() => {
     let scene: THREE.Scene,
@@ -116,12 +103,12 @@ const HomePage: React.FC = () => {
   
       // Camera Position
       const position = track.getPointAt(t);
-      camera.position.copy(position).add(new THREE.Vector3(0, cameraYOffset, cameraZOffset));
+      camera.position.copy(position).add(new THREE.Vector3(0, DEFAULT_CAMERA_Y_OFFSET, DEFAULT_CAMERA_Z_OFFSET));
   
       // Camera Look At
       const lookAt = track.getPointAt((t + 0.01) % 1); // Look slightly ahead
       cameraTarget.copy(lookAt);
-      cameraTarget.y += cameraLookAtOffset; // Adjust this value to look higher
+      cameraTarget.y += DEFAULT_CAMERA_LOOK_AT_OFFSET; // Adjust this value to look higher
   
       camera.lookAt(cameraTarget);
   
@@ -140,7 +127,7 @@ const HomePage: React.FC = () => {
     };
   
     const handleScroll = (e: WheelEvent) => {
-      scrollRef.current += e.deltaY * scrollSpeedMultiplier;
+      scrollRef.current += e.deltaY * DEFAULT_SCROLL_SPEED_MULTIPLIER;
     };
   
     init();
@@ -156,80 +143,11 @@ const HomePage: React.FC = () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('wheel', handleScroll);
     };
-  }, [cameraYOffset, cameraZOffset, cameraLookAtOffset, scrollSpeedMultiplier]);
-
-  // Devtool change handlers
-  const handleYOffsetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = parseFloat(e.target.value);
-    setCameraYOffset(newValue);
-    localStorage.setItem('cameraYOffset', newValue.toString());
-  };
-
-  const handleZOffsetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = parseFloat(e.target.value);
-    setCameraZOffset(newValue);
-    localStorage.setItem('cameraZOffset', newValue.toString());
-  };
-
-  const handleLookAtOffsetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = parseFloat(e.target.value);
-    setCameraLookAtOffset(newValue);
-    localStorage.setItem('cameraLookAtOffset', newValue.toString());
-  };
-
-  const handleSpeedMultiplierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = parseFloat(e.target.value);
-    setScrollSpeedMultiplier(newValue);
-    localStorage.setItem('scrollSpeedMultiplier', newValue.toString());
-  };
+  }, []);
 
   return (
     <>
       <div style={{ height: '100vh', width: '100vw', position: 'relative' }} ref={mountRef} />
-
-      {/* DevTools Panel */}
-      <div style={{ position: 'absolute', top: '20px', left: '20px', background: 'rgba(255, 255, 255, 0.7)', padding: '10px', borderRadius: '5px', zIndex: 10 }}>
-        <div>
-          <label htmlFor="yOffset">Y Offset:</label>
-          <input
-            type="number"
-            id="yOffset"
-            value={cameraYOffset}
-            onChange={handleYOffsetChange}
-            step="0.5"
-          />
-        </div>
-        <div>
-          <label htmlFor="zOffset">Z Offset:</label>
-          <input
-            type="number"
-            id="zOffset"
-            value={cameraZOffset}
-            onChange={handleZOffsetChange}
-            step="0.5"
-          />
-        </div>
-        <div>
-          <label htmlFor="lookAtOffset">Look At Offset:</label>
-          <input
-            type="number"
-            id="lookAtOffset"
-            value={cameraLookAtOffset}
-            onChange={handleLookAtOffsetChange}
-            step="0.5"
-          />
-        </div>
-        <div>
-          <label htmlFor="speedMultiplier">Scroll Speed:</label>
-          <input
-            type="number"
-            id="speedMultiplier"
-            value={scrollSpeedMultiplier}
-            onChange={handleSpeedMultiplierChange}
-            step="0.00005"
-          />
-        </div>
-      </div>
     </>
   );
 };
