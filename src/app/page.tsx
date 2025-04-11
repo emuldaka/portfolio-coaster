@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useRef } from 'react';
@@ -29,7 +28,8 @@ const HomePage: React.FC = () => {
         0.1,
         1000
       );
-      camera.position.set(0, 5, 20);
+      // Position the camera above the rollercoaster
+      camera.position.set(25, 30, -35);
 
       // Renderer
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -79,6 +79,8 @@ const HomePage: React.FC = () => {
       // Camera Position
       const position = track.getPointAt(t);
       camera.position.copy(position);
+      //Added to keep camera above track
+      camera.position.y += 10;
 
       // Camera Look At
       const lookAt = track.getPointAt((t + 0.01) % 1);
