@@ -4,9 +4,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
 // Saved settings from devtools
-const DEFAULT_CAMERA_Y_OFFSET = 10;
-const DEFAULT_CAMERA_Z_OFFSET = 5;
-const DEFAULT_CAMERA_LOOK_AT_OFFSET = 5;
+const DEFAULT_CAMERA_Y_OFFSET = 10.76530612244898;
+const DEFAULT_CAMERA_Z_OFFSET = 5.918367346938775;
+const DEFAULT_CAMERA_LOOK_AT_OFFSET = 8.16326530612245;
 const DEFAULT_SCROLL_SPEED_MULTIPLIER = 0.0001;
 
 const HomePage: React.FC = () => {
@@ -20,6 +20,15 @@ const HomePage: React.FC = () => {
       rollerCoasterGroup: THREE.Group,
       track: THREE.CatmullRomCurve3,
       cameraTarget: THREE.Vector3;
+
+    // Load saved settings or use defaults
+    const savedYOffset = localStorage.getItem('cameraYOffset');
+    const savedZOffset = localStorage.getItem('cameraZOffset');
+    const savedLookAtOffset = localStorage.getItem('cameraLookAtOffset');
+
+    const initialCameraYOffset = savedYOffset ? parseFloat(savedYOffset) : DEFAULT_CAMERA_Y_OFFSET;
+    const initialCameraZOffset = savedZOffset ? parseFloat(savedZOffset) : DEFAULT_CAMERA_Z_OFFSET;
+    const initialCameraLookAtOffset = savedLookAtOffset ? parseFloat(savedLookAtOffset) : DEFAULT_CAMERA_LOOK_AT_OFFSET;
   
     const init = () => {
       if (!mountRef.current) return;
@@ -103,12 +112,12 @@ const HomePage: React.FC = () => {
   
       // Camera Position
       const position = track.getPointAt(t);
-      camera.position.copy(position).add(new THREE.Vector3(0, DEFAULT_CAMERA_Y_OFFSET, DEFAULT_CAMERA_Z_OFFSET));
+      camera.position.copy(position).add(new THREE.Vector3(0, initialCameraYOffset, initialCameraZOffset));
   
       // Camera Look At
       const lookAt = track.getPointAt((t + 0.01) % 1); // Look slightly ahead
       cameraTarget.copy(lookAt);
-      cameraTarget.y += DEFAULT_CAMERA_LOOK_AT_OFFSET; // Adjust this value to look higher
+      cameraTarget.y += initialCameraLookAtOffset; // Adjust this value to look higher
   
       camera.lookAt(cameraTarget);
   
