@@ -7,11 +7,13 @@ const HomePage: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef(0);
 
-  const initialSpeed = 0.0005;
-  const initialVerticalAngle = 2;
+  // tweaked values
+  const ADJUSTED_INITIAL_SPEED = 0.0005;
+  const ADJUSTED_INITIAL_VERTICAL_ANGLE = 2;
 
-  const speed = useRef(initialSpeed);
-  const verticalAngle = useRef(initialVerticalAngle);
+  // Use refs for speed and verticalAngle to maintain their values across renders
+  const speed = useRef(ADJUSTED_INITIAL_SPEED);
+  const verticalAngle = useRef(ADJUSTED_INITIAL_VERTICAL_ANGLE);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -39,6 +41,7 @@ const HomePage: React.FC = () => {
     }
   }, []);
 
+
   useEffect(() => {
     let scene: THREE.Scene,
       camera: THREE.PerspectiveCamera,
@@ -60,7 +63,8 @@ const HomePage: React.FC = () => {
         0.1,
         1000
       );
-      // Initial camera position (adjust as needed)
+
+      // Initial camera position
       camera.position.set(0, 5, 0);
 
       // Renderer
