@@ -184,6 +184,8 @@ const HomePage: React.FC = () => {
     const handleContinueClick = () => {
         setCanMove(true);
         setStopIndex(null);
+        // Reset scrollRef to the current stop position to avoid jumps
+        scrollRef.current = scrollRef.current;
     };
 
     const handleMiniTrackClick = (trackNumber: 1 | 2 | 3) => {
