@@ -200,27 +200,12 @@ const HomePage: React.FC = () => {
     window.addEventListener('resize', handleResize);
     window.addEventListener('wheel', handleScroll);
 
-    // Event listener for mouse clicks
-    const handleMouseClick = (event: MouseEvent) => {
-        if (stopIndex !== null && !canMove) {
-            if (event.button === 0) { // Left click - Continue
-                handleContinueClick();
-            } else if (event.button === 2) { // Right click - Enter mini-track
-                handleMiniTrackClick(stopIndex + 1 as 1 | 2 | 3);
-            }
-        }
-    };
-
-    window.addEventListener('contextmenu', (event) => event.preventDefault());
-    window.addEventListener('mousedown', handleMouseClick);
-  
     return () => {
       if (mountRef.current) {
         mountRef.current.removeChild(renderer.domElement);
       }
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('wheel', handleScroll);
-      window.removeEventListener('mousedown', handleMouseClick);
     };
   }, []);
 
@@ -240,7 +225,7 @@ const HomePage: React.FC = () => {
               textAlign: 'center'
           }}>
               <h2>Choice at Stop {stopIndex + 1}!</h2>
-              <p>Left click to continue on main track.</p>
+              <button onClick={handleContinueClick}>Continue</button>
               <p>Right click to enter mini-track {stopIndex + 1}.</p>
           </div>
       )}
