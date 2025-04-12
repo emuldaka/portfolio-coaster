@@ -106,6 +106,18 @@ const HomePage: React.FC = () => {
        endMarker.position.copy(track.getPointAt(1));
        endMarker.rotation.copy(track.computeFrenetFrames(200, true).tangents[199]);
        scene.add(endMarker);
+
+      // Create stop markers
+      stopPositions.forEach(stopPosition => {
+          const stopGeometry = new THREE.ConeGeometry(1, 3, 32); // Cone as a stop marker
+          const stopMaterial = new THREE.MeshBasicMaterial({ color: 0x50C878 }); // Bright Green
+          const stopMarker = new THREE.Mesh(stopGeometry, stopMaterial);
+          const stopPositionVector = track.getPointAt(stopPosition);
+          stopMarker.position.copy(stopPositionVector);
+          stopMarker.rotation.copy(track.computeFrenetFrames(200, true).tangents[Math.floor(stopPosition * 200)]);
+          stopMarker.rotateX(Math.PI / 2); // Adjust rotation for cone
+          scene.add(stopMarker);
+      });
   
       // Track Length
       const calculatedTrackLength = track.getLength();
@@ -132,6 +144,7 @@ const HomePage: React.FC = () => {
                   t = stopPosition; // Force exact stop
                   setStopIndex(index);
                   setCanMove(false);
+                  scrollRef.current = stopPosition * looptime; // Ensure precise stopping
               }
           });
       }
