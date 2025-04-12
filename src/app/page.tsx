@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { Button } from "@/components/ui/button";
 
 // Saved settings from devtools
 const DEFAULT_CAMERA_Y_OFFSET = 8.13265306122449;
@@ -233,8 +234,8 @@ const HomePage: React.FC = () => {
               textAlign: 'center'
           }}>
               <h2>Choice at Stop {stopIndex + 1}!</h2>
-              <button onClick={handleContinueClick}>Continue</button>
-              <button onClick={handleEnterClick}>Enter</button>
+              <Button onClick={handleContinueClick}>Continue</Button>
+              <Button onClick={handleEnterClick}>Enter</Button>
           </div>
       )}
     </>
