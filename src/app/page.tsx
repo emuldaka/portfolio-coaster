@@ -159,7 +159,7 @@ const HomePage: React.FC = () => {
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
     };
-  
+
     const handleResize = () => {
       if (mountRef.current) {
         const width = mountRef.current.clientWidth;
@@ -175,20 +175,17 @@ const HomePage: React.FC = () => {
             scrollRef.current += e.deltaY * DEFAULT_SCROLL_SPEED_MULTIPLIER;
         }
     };
-
     const handleContinueClick = () => {
-        setCanMove(true);
-        setStopIndex(null);
-        // Reset scrollRef to the current stop position to avoid jumps
-        scrollRef.current = scrollRef.current;
-    };
-
-    const handleEnterClick = () => {
-      setCanMove(true);
-      setStopIndex(null);
-      // Reset scrollRef to the current stop position to avoid jumps
-      scrollRef.current = scrollRef.current;
-    };
+         setCanMove(true);
+         setStopIndex(null);
+         scrollRef.current = Math.ceil(scrollRef.current);
+     };
+ 
+     const handleEnterClick = () => {
+         setCanMove(true);
+         setStopIndex(null);
+         scrollRef.current = Math.ceil(scrollRef.current);
+     };
   
     init();
     animate();
@@ -204,20 +201,6 @@ const HomePage: React.FC = () => {
       window.removeEventListener('wheel', handleScroll);
     };
   }, []);
-
-    const handleContinueClick = () => {
-        setCanMove(true);
-        setStopIndex(null);
-        // Reset scrollRef to the current stop position to avoid jumps
-        scrollRef.current = scrollRef.current;
-    };
-
-    const handleEnterClick = () => {
-      setCanMove(true);
-      setStopIndex(null);
-      // Reset scrollRef to the current stop position to avoid jumps
-      scrollRef.current = scrollRef.current;
-    };
 
   return (
     <>
@@ -235,8 +218,16 @@ const HomePage: React.FC = () => {
               textAlign: 'center'
           }}>
               <h2>Choice at Stop {stopIndex + 1}!</h2>
-              <Button onClick={handleContinueClick} style={{ backgroundColor: '#A9BA93', marginRight: '10px' }}>Continue</Button>
-              <Button onClick={handleEnterClick} style={{ backgroundColor: '#A9BA93' }}>Enter</Button>
+              <Button onClick={() => {
+                 setCanMove(true);
+                 setStopIndex(null);
+                 scrollRef.current = Math.ceil(scrollRef.current);
+              }} style={{ backgroundColor: '#A9BA93', marginRight: '10px' }}>Continue</Button>
+              <Button onClick={() => {
+                 setCanMove(true);
+                 setStopIndex(null);
+                 scrollRef.current = Math.ceil(scrollRef.current);
+              }} style={{ backgroundColor: '#A9BA93' }}>Enter</Button>
           </div>
       )}
     </>
@@ -244,3 +235,4 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
+
