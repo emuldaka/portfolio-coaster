@@ -183,10 +183,11 @@ const HomePage: React.FC = () => {
         scrollRef.current = scrollRef.current;
     };
 
-    const handleMiniTrackClick = (trackNumber: 1 | 2 | 3) => {
-        setCurrentTrack(`mini${trackNumber}`);
-        setCanMove(true);
-        setStopIndex(null);
+    const handleEnterClick = () => {
+      setCanMove(true);
+      setStopIndex(null);
+      // Reset scrollRef to the current stop position to avoid jumps
+      scrollRef.current = scrollRef.current;
     };
   
     init();
@@ -234,8 +235,8 @@ const HomePage: React.FC = () => {
               textAlign: 'center'
           }}>
               <h2>Choice at Stop {stopIndex + 1}!</h2>
-              <Button onClick={handleContinueClick}>Continue</Button>
-              <Button onClick={handleEnterClick}>Enter</Button>
+              <Button onClick={handleContinueClick} style={{ backgroundColor: '#A9BA93', marginRight: '10px' }}>Continue</Button>
+              <Button onClick={handleEnterClick} style={{ backgroundColor: '#A9BA93' }}>Enter</Button>
           </div>
       )}
     </>
