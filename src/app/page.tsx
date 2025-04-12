@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
 import { Button } from "@/components/ui/button";
 
 // Saved settings from devtools
@@ -18,6 +20,7 @@ const HomePage: React.FC = () => {
     const [currentTrack, setCurrentTrack] = useState<'main' | 'mini1' | 'mini2' | 'mini3'>('main');
     const [stopIndex, setStopIndex] = useState<number | null>(null);
     const [canMove, setCanMove] = useState(true);
+    const [stopCoolDown, setStopCoolDown] = useState<number | null>(null);
 
   useEffect(() => {
     let scene: THREE.Scene,
@@ -108,15 +111,30 @@ const HomePage: React.FC = () => {
        scene.add(endMarker);
 
       // Create stop markers
-      stopPositions.forEach(stopPosition => {
-          const stopGeometry = new THREE.ConeGeometry(1, 3, 32); // Cone as a stop marker
-          const stopMaterial = new THREE.MeshBasicMaterial({ color: 0x50C878 }); // Bright Green
-          const stopMarker = new THREE.Mesh(stopGeometry, stopMaterial);
+      stopPositions.forEach((stopPosition, index) => {
           const stopPositionVector = track.getPointAt(stopPosition);
-          stopMarker.position.copy(stopPositionVector);
-          stopMarker.rotation.copy(track.computeFrenetFrames(200, true).tangents[Math.floor(stopPosition * 200)]);
-          stopMarker.rotateX(Math.PI / 2); // Adjust rotation for cone
-          scene.add(stopMarker);
+          const offset = 2; // Offset to the right
+          const poleHeight = 5;
+          const poleRadius = 0.2;
+          const topSize = 0.5;
+
+          // Street pole
+          const poleGeometry = new THREE.CylinderGeometry(poleRadius, poleRadius, poleHeight, 32);
+          const poleMaterial = new THREE.MeshBasicMaterial({ color: 0x8B4513 }); // Brown color
+          const pole = new THREE.Mesh(poleGeometry, poleMaterial);
+          pole.position.copy(stopPositionVector);
+          pole.position.x += offset; // Offset to the right
+          pole.position.y = poleHeight / 2; // Position at the ground
+          scene.add(pole);
+
+          // Top of the street pole
+          const topGeometry = new THREE.BoxGeometry(topSize, topSize, topSize);
+          const topMaterial = new THREE.MeshBasicMaterial({ color: 0x8B4513 }); // Red color
+          const top = new THREE.Mesh(topGeometry, topMaterial);
+          top.position.copy(stopPositionVector);
+          top.position.x += offset; // Offset to the right
+          top.position.y = poleHeight + topSize / 2; // Position on top of the pole
+          scene.add(top);
       });
     };
   
@@ -131,30 +149,29 @@ const HomePage: React.FC = () => {
   
       const looptime = 20;
       let t = (scrollRef.current % looptime) / looptime;
-
+  
       // Check for stops
       if (currentTrack === 'main') {
           stopPositions.forEach((stopPosition, index) => {
               if (Math.abs(t - stopPosition) < 0.005) {
                   t = stopPosition; // Force exact stop
-                  setStopIndex(index);
-                  setCanMove(false);
-                  scrollRef.current = stopPosition * looptime; // Ensure precise stopping
+                  handleStop(index)
                   return; // Stop checking other positions once a stop is found
               }
           });
       }
   
       // Camera Position
-      const position = track.getPointAt(t);
-      camera.position.copy(position).add(new THREE.Vector3(0, initialCameraYOffset, initialCameraZOffset));
+       const position = track.getPointAt(t);
+       camera.position.copy(position).add(new THREE.Vector3(0, initialCameraYOffset, initialCameraZOffset));
+
   
-      // Camera Look At
-      const lookAt = track.getPointAt((t + 0.01) % 1); // Look slightly ahead
-      cameraTarget.copy(lookAt);
-      cameraTarget.y += initialCameraLookAtOffset; // Adjust this value to look higher
+       // Camera Look At
+       const lookAt = track.getPointAt((t + 0.01) % 1); // Look slightly ahead
+       cameraTarget.copy(lookAt);
+       cameraTarget.y +=  initialCameraLookAtOffset; // Adjust this value to look higher
   
-      camera.lookAt(cameraTarget);
+       camera.lookAt(cameraTarget);
   
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
@@ -175,64 +192,67 @@ const HomePage: React.FC = () => {
             scrollRef.current += e.deltaY * DEFAULT_SCROLL_SPEED_MULTIPLIER;
         }
     };
+
     const handleContinueClick = () => {
          setCanMove(true);
          setStopIndex(null);
-         scrollRef.current = Math.ceil(scrollRef.current);
+         setStopCoolDown(Date.now());
+         scrollRef.current = Math.floor(scrollRef.current);
      };
  
+     const handleStop = (index: number) => {
+        if (stopCoolDown && Date.now() - stopCoolDown < 10000){
+            return
+        }
+         setStopIndex(index);
+         setCanMove(false);
+         scrollRef.current = stopPositions[index] * 20 // Ensure precise stopping
+         //scrollRef.current = Math.ceil(scrollRef.current);
+      };
+  
      const handleEnterClick = () => {
          setCanMove(true);
          setStopIndex(null);
          scrollRef.current = Math.ceil(scrollRef.current);
      };
   
-    init();
-    animate();
+     init();
+     animate();
   
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('wheel', handleScroll);
+     window.addEventListener('resize', handleResize);
+     window.addEventListener('wheel', handleScroll);
 
-    return () => {
-      if (mountRef.current) {
-        mountRef.current.removeChild(renderer.domElement);
-      }
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('wheel', handleScroll);
-    };
-  }, []);
+     return () => {
+       if (mountRef.current) {
+         mountRef.current.removeChild(renderer.domElement);
+       }
+       window.removeEventListener('resize', handleResize);
+       window.removeEventListener('wheel', handleScroll);
+     };
+   }, []);
 
-  return (
-    <>
-      <div style={{ height: '100vh', width: '100vw', position: 'relative' }} ref={mountRef} />
-      {!canMove && stopIndex !== null && (
-          <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              padding: '20px',
-              borderRadius: '10px',
-              zIndex: 10,
-              textAlign: 'center'
-          }}>
-              <h2>Choice at Stop {stopIndex + 1}!</h2>
-              <Button onClick={() => {
-                 setCanMove(true);
-                 setStopIndex(null);
-                 scrollRef.current = Math.ceil(scrollRef.current);
-              }} style={{ backgroundColor: '#A9BA93', marginRight: '10px' }}>Continue</Button>
-              <Button onClick={() => {
-                 setCanMove(true);
-                 setStopIndex(null);
-                 scrollRef.current = Math.ceil(scrollRef.current);
-              }} style={{ backgroundColor: '#A9BA93' }}>Enter</Button>
-          </div>
-      )}
-    </>
-  );
-};
+   return (
+     <>
+       <div style={{ height: '100vh', width: '100vw', position: 'relative' }} ref={mountRef} />
+       {!canMove && stopIndex !== null && (
+           <div style={{
+                 position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                 backgroundColor: 'rgba(255, 255, 255, 0.8)', padding: '20px', borderRadius: '10px',
+                 zIndex: 10,
+                 textAlign: 'center'
+           }}>
+               <h2>Choice at Stop {stopIndex + 1}!</h2>
+               <Button onClick={() => {
+                  setCanMove(true);
+                  setStopIndex(null);
+                  scrollRef.current = Math.ceil(scrollRef.current);
+               }} style={{ backgroundColor: '#A9BA93', marginRight: '10px' }}>Continue</Button>
+               <Button onClick={() => {console.log('enter');
+               }} style={{ backgroundColor: '#A9BA93' }}>Enter</Button>
+           </div>
+       )}
+     </>
+   );
+ };
 
-export default HomePage;
-
+ export default HomePage;
