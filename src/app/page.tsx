@@ -4,14 +4,20 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
 // Saved settings from devtools
-const DEFAULT_CAMERA_Y_OFFSET = 10.76530612244898;
-const DEFAULT_CAMERA_Z_OFFSET = 5.918367346938775;
-const DEFAULT_CAMERA_LOOK_AT_OFFSET = 8.16326530612245;
+const DEFAULT_CAMERA_Y_OFFSET = 10.13265306122449;
+const DEFAULT_CAMERA_Z_OFFSET = 7.142857142857142;
+const DEFAULT_CAMERA_LOOK_AT_OFFSET = 11.224489795918366;
 const DEFAULT_SCROLL_SPEED_MULTIPLIER = 0.0001;
 
 const HomePage: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef(0);
+  const [trackLength, setTrackLength] = useState(0);
+
+    // State for handling stops and mini-tracks
+    const [currentTrack, setCurrentTrack] = useState<'main' | 'mini1' | 'mini2' | 'mini3'>('main');
+    const [stopIndex, setStopIndex] = useState<number | null>(null);
+    const [canMove, setCanMove] = useState(true);
 
   useEffect(() => {
     let scene: THREE.Scene,
@@ -21,15 +27,17 @@ const HomePage: React.FC = () => {
       track: THREE.CatmullRomCurve3,
       cameraTarget: THREE.Vector3;
 
-    // Load saved settings or use defaults
+    // Saved settings or use defaults
     const savedYOffset = localStorage.getItem('cameraYOffset');
     const savedZOffset = localStorage.getItem('cameraZOffset');
     const savedLookAtOffset = localStorage.getItem('cameraLookAtOffset');
-
+  
     const initialCameraYOffset = savedYOffset ? parseFloat(savedYOffset) : DEFAULT_CAMERA_Y_OFFSET;
     const initialCameraZOffset = savedZOffset ? parseFloat(savedZOffset) : DEFAULT_CAMERA_Z_OFFSET;
     const initialCameraLookAtOffset = savedLookAtOffset ? parseFloat(savedLookAtOffset) : DEFAULT_CAMERA_LOOK_AT_OFFSET;
-  
+
+    const stopPositions = [0.25, 0.5, 0.75]; // Example stop positions along the track
+
     const init = () => {
       if (!mountRef.current) return;
   
@@ -100,15 +108,33 @@ const HomePage: React.FC = () => {
        scene.add(endMarker);
   
       // Track Length
-      const trackLength = track.getLength();
-      console.log('Track Length:', trackLength);
+      const calculatedTrackLength = track.getLength();
+      setTrackLength(calculatedTrackLength);
+      console.log('Track Length:', calculatedTrackLength);
     };
   
     const animate = () => {
       if (!mountRef.current) return;
+
+      if (!canMove) {
+          renderer.render(scene, camera);
+          requestAnimationFrame(animate);
+          return;
+      }
   
       const looptime = 20;
-      const t = (scrollRef.current % looptime) / looptime;
+      let t = (scrollRef.current % looptime) / looptime;
+
+      // Check for stops
+      if (currentTrack === 'main') {
+          stopPositions.forEach((stopPosition, index) => {
+              if (Math.abs(t - stopPosition) < 0.005) {
+                  t = stopPosition; // Force exact stop
+                  setStopIndex(index);
+                  setCanMove(false);
+              }
+          });
+      }
   
       // Camera Position
       const position = track.getPointAt(t);
@@ -136,7 +162,20 @@ const HomePage: React.FC = () => {
     };
   
     const handleScroll = (e: WheelEvent) => {
-      scrollRef.current += e.deltaY * DEFAULT_SCROLL_SPEED_MULTIPLIER;
+        if (canMove) {
+            scrollRef.current += e.deltaY * DEFAULT_SCROLL_SPEED_MULTIPLIER;
+        }
+    };
+
+    const handleContinueClick = () => {
+        setCanMove(true);
+        setStopIndex(null);
+    };
+
+    const handleMiniTrackClick = (trackNumber: 1 | 2 | 3) => {
+        setCurrentTrack(`mini${trackNumber}`);
+        setCanMove(true);
+        setStopIndex(null);
     };
   
     init();
@@ -144,6 +183,20 @@ const HomePage: React.FC = () => {
   
     window.addEventListener('resize', handleResize);
     window.addEventListener('wheel', handleScroll);
+
+    // Event listener for mouse clicks
+    const handleMouseClick = (event: MouseEvent) => {
+        if (stopIndex !== null && !canMove) {
+            if (event.button === 0) { // Left click - Continue
+                handleContinueClick();
+            } else if (event.button === 2) { // Right click - Enter mini-track
+                handleMiniTrackClick(stopIndex + 1 as 1 | 2 | 3);
+            }
+        }
+    };
+
+    window.addEventListener('contextmenu', (event) => event.preventDefault());
+    window.addEventListener('mousedown', handleMouseClick);
   
     return () => {
       if (mountRef.current) {
@@ -151,12 +204,33 @@ const HomePage: React.FC = () => {
       }
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('wheel', handleScroll);
+      window.removeEventListener('mousedown', handleMouseClick);
     };
   }, []);
 
   return (
     <>
       <div style={{ height: '100vh', width: '100vw', position: 'relative' }} ref={mountRef} />
+      {!canMove && stopIndex !== null && (
+          <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              padding: '20px',
+              borderRadius: '10px',
+              zIndex: 10,
+              textAlign: 'center'
+          }}>
+              <h2>Choice at Stop {stopIndex + 1}!</h2>
+              <p>Left click to continue on main track.</p>
+              <p>Right click to enter mini-track {stopIndex + 1}.</p>
+          </div>
+      )}
+      <div style={{ position: 'absolute', top: '20px', left: '20px', color: 'black' }}>
+            Track Length: {trackLength}
+        </div>
     </>
   );
 };
