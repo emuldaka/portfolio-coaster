@@ -4,8 +4,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
 // Saved settings from devtools
-const DEFAULT_CAMERA_Y_OFFSET = 10.13265306122449;
-const DEFAULT_CAMERA_Z_OFFSET = 7.142857142857142;
+const DEFAULT_CAMERA_Y_OFFSET = 8.13265306122449;
+const DEFAULT_CAMERA_Z_OFFSET = 12.142857142857142;
 const DEFAULT_CAMERA_LOOK_AT_OFFSET = 11.224489795918366;
 const DEFAULT_SCROLL_SPEED_MULTIPLIER = 0.0001;
 
@@ -145,6 +145,7 @@ const HomePage: React.FC = () => {
                   setStopIndex(index);
                   setCanMove(false);
                   scrollRef.current = stopPosition * looptime; // Ensure precise stopping
+                  return; // Stop checking other positions once a stop is found
               }
           });
       }
