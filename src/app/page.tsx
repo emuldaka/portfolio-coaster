@@ -12,7 +12,6 @@ const DEFAULT_SCROLL_SPEED_MULTIPLIER = 0.0001;
 const HomePage: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef(0);
-  const [trackLength, setTrackLength] = useState(0);
 
     // State for handling stops and mini-tracks
     const [currentTrack, setCurrentTrack] = useState<'main' | 'mini1' | 'mini2' | 'mini3'>('main');
@@ -118,11 +117,6 @@ const HomePage: React.FC = () => {
           stopMarker.rotateX(Math.PI / 2); // Adjust rotation for cone
           scene.add(stopMarker);
       });
-  
-      // Track Length
-      const calculatedTrackLength = track.getLength();
-      setTrackLength(calculatedTrackLength);
-      console.log('Track Length:', calculatedTrackLength);
     };
   
     const animate = () => {
@@ -216,6 +210,13 @@ const HomePage: React.FC = () => {
         scrollRef.current = scrollRef.current;
     };
 
+    const handleEnterClick = () => {
+      setCanMove(true);
+      setStopIndex(null);
+      // Reset scrollRef to the current stop position to avoid jumps
+      scrollRef.current = scrollRef.current;
+    };
+
   return (
     <>
       <div style={{ height: '100vh', width: '100vw', position: 'relative' }} ref={mountRef} />
@@ -233,12 +234,9 @@ const HomePage: React.FC = () => {
           }}>
               <h2>Choice at Stop {stopIndex + 1}!</h2>
               <button onClick={handleContinueClick}>Continue</button>
-              <p>Right click to enter mini-track {stopIndex + 1}.</p>
+              <button onClick={handleEnterClick}>Enter</button>
           </div>
       )}
-      <div style={{ position: 'absolute', top: '20px', left: '20px', color: 'black' }}>
-            Track Length: {trackLength}
-        </div>
     </>
   );
 };
