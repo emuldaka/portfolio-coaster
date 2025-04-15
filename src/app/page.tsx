@@ -28,7 +28,8 @@ const HomePage: React.FC = () => {
       renderer: THREE.WebGLRenderer,
       rollerCoasterGroup: THREE.Group,
       track: THREE.CatmullRomCurve3,
-      cameraTarget: THREE.Vector3;
+      cameraTarget: THREE.Vector3,
+      sun: THREE.DirectionalLight;
 
     // Saved settings or use defaults
     const savedYOffset = localStorage.getItem('cameraYOffset');
@@ -110,6 +111,15 @@ const HomePage: React.FC = () => {
        endMarker.rotation.copy(track.computeFrenetFrames(200, true).tangents[199]);
        scene.add(endMarker);
 
+      // Lighting
+      sun = new THREE.DirectionalLight(0xffffff, 1);
+      sun.position.set(60, 100, 60);
+      sun.castShadow = true;
+      scene.add(sun);
+  
+      const ambientLight = new THREE.AmbientLight(0x404040); // Soft white light
+      scene.add(ambientLight);
+
       // Create stop markers
       stopPositions.forEach((stopPosition, index) => {
           const stopPositionVector = track.getPointAt(stopPosition);
@@ -124,17 +134,24 @@ const HomePage: React.FC = () => {
           const pole = new THREE.Mesh(poleGeometry, poleMaterial);
           pole.position.copy(stopPositionVector);
           pole.position.x += offset; // Offset to the right
-          pole.position.y = poleHeight / 2; // Position at the ground
+          pole.position.y = stopPositionVector.y;
           scene.add(pole);
 
-          // Top of the street pole
-          const topGeometry = new THREE.BoxGeometry(topSize, topSize, topSize);
-          const topMaterial = new THREE.MeshBasicMaterial({ color: 0x8B4513 }); // Red color
-          const top = new THREE.Mesh(topGeometry, topMaterial);
-          top.position.copy(stopPositionVector);
-          top.position.x += offset; // Offset to the right
-          top.position.y = poleHeight + topSize / 2; // Position on top of the pole
-          scene.add(top);
+          // Text label for the stop
+          const loader = new FontLoader();
+          loader.load('/fonts/helvetiker_regular.typeface.json', function (font) {
+              const textGeometry = new TextGeometry(`Stop ${index + 1}`, {
+                  font: font,
+                  size: 0.5,
+                  height: 0.2,
+              });
+              const textMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+              const text = new THREE.Mesh(textGeometry, textMaterial);
+              text.position.copy(stopPositionVector);
+              text.position.x += offset + 1; // Shift to the right of the pole
+              text.position.y += poleHeight; // Position above the pole
+              scene.add(text);
+          });
       });
     };
   
@@ -190,6 +207,7 @@ const HomePage: React.FC = () => {
     const handleScroll = (e: WheelEvent) => {
         if (canMove) {
             scrollRef.current += e.deltaY * DEFAULT_SCROLL_SPEED_MULTIPLIER;
+            scrollRef.current = Math.max(0, scrollRef.current); // Prevent reverse scrolling
         }
     };
 
@@ -235,6 +253,7 @@ const HomePage: React.FC = () => {
      <>
        <div style={{ height: '100vh', width: '100vw', position: 'relative' }} ref={mountRef} />
        {!canMove && stopIndex !== null && (
+
            <div style={{
                  position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
                  backgroundColor: 'rgba(255, 255, 255, 0.8)', padding: '20px', borderRadius: '10px',
